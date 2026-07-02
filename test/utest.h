@@ -357,6 +357,8 @@ UTEST_EXTERN struct utest_state_s utest_state;
 
 #if defined(_MSC_VER)
 #define UTEST_WEAK __forceinline
+#elif defined(__MINGW64__) || defined(__MINGW32__)
+#define UTEST_WEAK static
 #else
 #define UTEST_WEAK __attribute__((weak))
 #endif

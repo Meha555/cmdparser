@@ -13,13 +13,12 @@ http://www.apache.org/licenses/LICENSE-2.0
 #include <string.h>
 
 // isatty
-#if defined(__GLIBC__)
-#include <unistd.h>
-#endif
-#if defined(_MSC_VER)
+#if defined(_WIN32)
 #include <io.h>
 #define isatty _isatty
 #define fileno _fileno
+#elif defined(__GLIBC__)
+#include <unistd.h>
 #endif
 
 // ============================================================================
@@ -456,10 +455,9 @@ static EVAL_CODE eval_option_output(cmdp_option_st *option, char *arg)
 #define _parse_ret_1 (-2)
 static int cmdp_parse_args(int argc, char **argv, cmdp_command_st *cmdp, cmdp_ctx *ctx, int recursive)
 {
-    cmdp_error_params_st error_params = {
-        .err_stream = ctx->err_stream,
-        .cmdp       = cmdp,
-    };
+    cmdp_error_params_st error_params = {0};
+    error_params.err_stream            = ctx->err_stream;
+    error_params.cmdp                  = cmdp;
 #define __ERROR_HANDLER(_type, _c, _s)                                                                                 \
     do                                                                                                                 \
     {                                                                                                                  \
@@ -666,18 +664,17 @@ static int cmdp_run_callback(int argc, char **argv, cmdp_command_st *cmdp, cmdp_
 
     if (cmdp->fn_process != NULL)
     {
-        cmdp_process_param_st fn_process_param = {
-            .argc       = argc,
-            .argv       = argv,
-            .call_name  = cmdp->__call_name,
-            .current    = cmdp,
-            .next       = sub_cmd,
-            .opts       = parsed_options,
-            .sub_level  = recursive,
-            .out_stream = ctx->out_stream,
-            .err_stream = ctx->err_stream,
-            .error_code = 1,
-        };
+        cmdp_process_param_st fn_process_param = {0};
+        fn_process_param.argc                  = argc;
+        fn_process_param.argv                  = argv;
+        fn_process_param.call_name             = cmdp->__call_name;
+        fn_process_param.current               = cmdp;
+        fn_process_param.next                  = sub_cmd;
+        fn_process_param.opts                  = parsed_options;
+        fn_process_param.sub_level             = recursive;
+        fn_process_param.out_stream            = ctx->out_stream;
+        fn_process_param.err_stream            = ctx->err_stream;
+        fn_process_param.error_code            = 1;
         cmdp_action_t code = cmdp->fn_process(&fn_process_param);
         bool show_help     = HAS_FLAG(code, CMDP_ACT_SHOW_HELP);
         switch (code & 0xFFFF)
